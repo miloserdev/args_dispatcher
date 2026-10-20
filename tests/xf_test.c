@@ -6,20 +6,49 @@
 
 #include "args.h"
 
-static int h_ab ( context_t *ctx ) { (void) ctx; puts ( "H_AB" ); return 0; }
-static int h_abc ( context_t *ctx ) { (void) ctx; puts ( "H_ABC" ); return 0; }
-static int h_ok ( context_t *ctx ) { (void) ctx; puts ( "H_OK" ); return 0; }
-static int h_neg ( context_t *ctx ) { (void) ctx; puts ( "H_NEG" ); return -1; }
-static int h_pos ( context_t *ctx ) { (void) ctx; puts ( "H_POS" ); return 1; }
+static int h_ab ( args_context_t *ctx ) {
+	(void) ctx;
+	puts ( "H_AB" );
+	return 0;
+}
+
+static int h_abc ( args_context_t *ctx ) {
+	(void) ctx;
+	puts ( "H_ABC" );
+	return 0;
+}
+
+static int h_ok ( args_context_t *ctx ) {
+	(void) ctx;
+	puts ( "H_OK" );
+	return 0;
+}
+
+static int h_neg ( args_context_t *ctx ) {
+	(void) ctx;
+	puts ( "H_NEG" );
+	return -1;
+}
+
+static int h_pos ( args_context_t *ctx ) {
+	(void) ctx;
+	puts ( "H_POS" );
+	return 1;
+}
 
 /* keyword parser with overlapping names (src/scope) and an exact-vs-prefix pair (dev/device) */
-static args_kw_t kw_tbl[] = {
-	{ "src", 0, 0, NULL }, { "scope", 0, 0, NULL }, { "dev", 0, 0, NULL }, { "device", 0, 0, NULL }, { "up", 1, 0, NULL }, { NULL },
+static args_keyword_t kw_tbl[] = {
+	{ "src", 0, 0, NULL },
+	{ "scope", 0, 0, NULL },
+	{ "dev", 0, 0, NULL },
+	{ "device", 0, 0, NULL },
+	{ "up", 1, 0, NULL },
+	{ NULL },
 };
 
-static int h_kw ( context_t *ctx ) {
-	args_kw_t *kw = ctx->command->kw;
-	if ( args_parse_kw ( ctx ) != 0 )
+static int h_kw ( args_context_t *ctx ) {
+	args_keyword_t *kw = ctx->command->kw;
+	if ( args_parse_keyword ( ctx ) != 0 )
 	{
 		return -1;
 	}
@@ -33,24 +62,25 @@ static int h_kw ( context_t *ctx ) {
 	return 0;
 }
 
-static command_t chain[] = {
+static args_command_t chain[] = {
 	{ "one", h_ok, chain, 0, "one" },
 	{ "two", h_ok, chain, 0, "two" },
 	{ NULL,  NULL, NULL,  0, NULL  },
 };
 
-static command_t tbl[] = {
-	{ "ab",       h_ab,  NULL,  0, "ab"       },
-	{ "abc",      h_abc, NULL,  0, "abc"      },
-	{ "neg",      h_neg, NULL,  0, "neg"      },
+static args_command_t tbl[] = {
+	{ "ab", h_ab, NULL, 0, "ab" },
+	{ "abc", h_abc, NULL, 0, "abc" },
+	{ "neg", h_neg, NULL, 0, "neg" },
 	{ "negchain", h_neg, chain, 0, "negchain" },
 	{ "poschain", h_pos, chain, 0, "poschain" },
-	{ "chain",    NULL,  chain, 0, "chain"    },
-	{ "kw",       h_kw,  NULL,  0, "kw",       kw_tbl },
-	{ NULL,       NULL,  NULL,  0, NULL       },
+	{ "chain", NULL, chain, 0, "chain" },
+	{ "kw", h_kw, NULL, 0, "kw", kw_tbl },
+	{ NULL, NULL, NULL, 0, NULL },
 };
 
-int main ( int argc, char *argv[] ) {
+int main ( int   argc,
+		   char *argv[] ) {
 	char  buf[MAX_LINE];
 	char *line = args_parse ( buf, sizeof ( buf ), argc, argv );
 	if ( line == NULL )
@@ -59,8 +89,8 @@ int main ( int argc, char *argv[] ) {
 		return 2;
 	}
 
-	argv_t    av;
-	context_t ctx = { .av = &av, .line = line, .command = tbl };
+	args_argv_t    av;
+	args_context_t ctx = { .av = &av, .line = line, .command = tbl };
 
 	if ( args_tokenize ( &ctx ) == 0 )
 	{

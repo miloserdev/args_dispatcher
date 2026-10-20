@@ -15,7 +15,7 @@ typedef struct
 {
 	char *tokens[MAX_TOKENS];
 	int   count;
-} argv_t;
+} args_argv_t;
 
 /* A "keyword [value]" option of a command; tables end with { NULL } */
 typedef struct
@@ -24,42 +24,42 @@ typedef struct
 	int         flag;     /* 1: keyword without a value (up, onlink, ...) */
 	int         required; /* 1: command fails when the keyword is missing  */
 	const char *val;      /* out: value, "" for a present flag, NULL if absent */
-} args_kw_t;
+} args_keyword_t;
 
-typedef struct command_t command_t;
-typedef struct context_t context_t;
+typedef struct args_command_t args_command_t;
+typedef struct args_context_t args_context_t;
 
-// typedef int ( *handler_fn ) ( context_t *ctx );
+// typedef int ( *handler_fn ) ( args_context_t *ctx );
 
-struct command_t
+struct args_command_t
 {
-	const char *name;
-	int         ( *fn ) ( context_t *ctx );
-	command_t  *next;
-	size_t      args;
-	const char *help;
-	args_kw_t  *kw; /* optional keywords following the positional arguments */
+	const char     *name;
+	int             ( *fn ) ( args_context_t *ctx );
+	args_command_t *next;
+	size_t          args;
+	const char     *help;
+	args_keyword_t *kw; /* optional keywords following the positional arguments */
 };
 
-/* REPL part of the context; context_t.repl is NULL outside of a REPL */
+/* REPL part of the context; args_context_t.repl is NULL outside of a REPL */
 typedef struct
 {
-	command_t *root; /* root command table (context_t.command moves while dispatching) */
-} args_context_repl;
+	args_command_t *root; /* root command table (args_context_t.command moves while dispatching) */
+} args_context_repl_t;
 
-struct context_t
+struct args_context_t
 {
-	command_t *command;
-	void      *data;
-	char      *line;
-	argv_t    *av;
-	int        idx;
-	int        depth;
+	args_command_t *command;
+	void           *data;
+	char           *line;
+	args_argv_t    *av;
+	int             idx;
+	int             depth;
 
-	args_context_repl *repl; /* NULL: not a REPL */
+	args_context_repl_t *repl; /* NULL: not a REPL */
 };
 
-static int matches (
+static int __matches (
 	const char *cmd,
 	const char *pattern
 ) {
@@ -104,7 +104,7 @@ static int args_find_name (
 			return (int) i; /* exact match */
 		}
 
-		if ( matches ( token, name ) )
+		if ( __matches ( token, name ) )
 		{
 			hit = (int) i;
 			hits++;
@@ -153,7 +153,7 @@ static char *args_parse (
 }
 
 static int args_tokenize (
-	context_t *ctx
+	args_context_t *ctx
 ) {
 
 	ctx->av->count = 0;
@@ -168,14 +168,14 @@ static int args_tokenize (
 	return ctx->av->count;
 }
 
-static command_t *args_lookup (
-	context_t *ctx
+static args_command_t *__args_lookup (
+	args_context_t *ctx
 ) {
 
-	command_t *table = ctx->command;
-	char      *token = ctx->av->tokens[ctx->idx];
+	args_command_t *table = ctx->command;
+	char           *token = ctx->av->tokens[ctx->idx];
 
-	int idx = args_find ( token, table, command_t, name, ARGS_NT );
+	int idx = args_find ( token, table, args_command_t, name, ARGS_NT );
 
 	if ( idx == ARGS_AMBIGUOUS )
 	{
@@ -188,14 +188,14 @@ static command_t *args_lookup (
 
 /* prints the table's commands and, recursively, their subcommands */
 static void args_help (
-	FILE            *out,
-	const command_t *table,
-	int              depth
+	FILE                 *out,
+	const args_command_t *table,
+	int                   depth
 ) {
 
 	for ( int i = 0; table[i].name != NULL; i++ )
 	{
-		const command_t *c = &table[i];
+		const args_command_t *c = &table[i];
 
 		fprintf ( out, "%*s%-*s %s\n", depth * 2, "", 16 - depth * 2, c->name, c->help ? c->help : "" );
 
@@ -207,7 +207,7 @@ static void args_help (
 	}
 }
 
-static int args_dispatch ( context_t *ctx ) {
+static int args_dispatch ( args_context_t *ctx ) {
 
 	// printf ( "ctx->idx=%d, ctx->av->count=%d \n", ctx->idx, ctx->av->count );
 
@@ -222,9 +222,9 @@ static int args_dispatch ( context_t *ctx ) {
 		return 0;
 	}
 
-	command_t *table = ctx->command; /* table of the CURRENT level - capture BEFORE lookup */
+	args_command_t *table = ctx->command; /* table of the CURRENT level - capture BEFORE lookup */
 
-	ctx->command = args_lookup ( ctx );
+	ctx->command = __args_lookup ( ctx );
 	if ( ctx->command == NULL )
 	{
 		log_info ( "error: unknown command <%s> ", ctx->av->tokens[ctx->idx] );
@@ -308,11 +308,11 @@ static int args_dispatch ( context_t *ctx ) {
  * command's keyword table (ctx->command->kw). Keywords may be abbreviated to
  * a unique prefix, like in iproute2.
  * Returns 0 on success, -1 (after logging the reason) on any error. */
-static int args_parse_kw (
-	context_t *ctx
+static int args_parse_keyword (
+	args_context_t *ctx
 ) {
 
-	args_kw_t *kw = ctx->command->kw;
+	args_keyword_t *kw = ctx->command->kw;
 
 	for ( int k = 0; kw != NULL && kw[k].key != NULL; k++ )
 	{
@@ -326,7 +326,7 @@ static int args_parse_kw (
 		const char *tok = ctx->av->tokens[i];
 
 		/* exact match wins, otherwise a unique prefix is accepted: "d" -> "dev" */
-		int k = kw == NULL ? ARGS_NONE : args_find ( tok, kw, args_kw_t, key, ARGS_NT );
+		int k = kw == NULL ? ARGS_NONE : args_find ( tok, kw, args_keyword_t, key, ARGS_NT );
 
 		if ( k == ARGS_AMBIGUOUS )
 		{
@@ -340,7 +340,7 @@ static int args_parse_kw (
 			return -1;
 		}
 
-		args_kw_t *hit = &kw[k];
+		args_keyword_t *hit = &kw[k];
 
 		if ( hit->val != NULL )
 		{
@@ -403,8 +403,8 @@ static int args_parse_uint (
 	#include <readline/history.h>
 	#include <readline/readline.h>
 
-static int is_terminal_leaf ( command_t *leaf,
-							  command_t *found_in ) {
+static int __is_terminal_leaf ( args_command_t *leaf,
+								args_command_t *found_in ) {
 	if ( leaf->next == NULL )
 	{
 		return 1; /* ordinary dead end */
@@ -422,13 +422,13 @@ static int is_terminal_leaf ( command_t *leaf,
 
 typedef struct
 {
-	command_t    *table;        /* table to complete command names from (NULL: none) */
-	command_t    *leaf;         /* last command found, if any                        */
-	command_t    *found_in;     /* table the last command was taken from             */
-	args_kw_t    *kw;           /* set while the keywords of `leaf` are completed    */
-	unsigned long used;         /* bit k: keyword kw[k] is already on the line       */
-	int           expect_value; /* last token is a keyword that still needs a value  */
-} walk_t;
+	args_command_t *table;        /* table to complete command names from (NULL: none) */
+	args_command_t *leaf;         /* last command found, if any                        */
+	args_command_t *found_in;     /* table the last command was taken from             */
+	args_keyword_t *kw;           /* set while the keywords of `leaf` are completed    */
+	unsigned long   used;         /* bit k: keyword kw[k] is already on the line       */
+	int             expect_value; /* last token is a keyword that still needs a value  */
+} args_walk_t;
 
 /* Walks the already typed (completed) tokens through the command tree:
  * command names, then the command's positional arguments, then its
@@ -436,29 +436,29 @@ typedef struct
  * Also sets w->found_in to the table the last command was taken from.
  * Returns 0 on success, -1 if the input does not fit the tree.
  */
-static int walk_tree ( command_t  *root,
-					   const char *completed_part,
-					   walk_t     *w ) {
+static int __args_walk_tree ( args_command_t *root,
+							  const char     *completed_part,
+							  args_walk_t    *w ) {
 	char buf[MAX_LINE];
 	strncpy ( buf, completed_part, sizeof ( buf ) - 1 );
 	buf[sizeof ( buf ) - 1] = '\0';
 
 	memset ( w, 0, sizeof ( *w ) );
 
-	command_t *table    = root;
-	command_t *found_in = table;        /* table where the LAST command was found */
+	args_command_t *table    = root;
+	args_command_t *found_in = table; /* table where the LAST command was found */
 
 	char *tok = strtok ( buf, " \t" );
 	while ( tok != NULL )
 	{
-		int idx = args_find ( tok, table, command_t, name, ARGS_NT );
+		int idx = args_find ( tok, table, args_command_t, name, ARGS_NT );
 
 		if ( idx < 0 )
 		{
 			return -1; /* nothing matched, or ambiguous */
 		}
 
-		command_t *found = &table[idx];
+		args_command_t *found = &table[idx];
 
 		w->leaf  = found;
 		found_in = table; /* remember WHICH table this token was taken from */
@@ -485,7 +485,7 @@ static int walk_tree ( command_t  *root,
 
 			while ( tok != NULL )
 			{
-				int k = args_find ( tok, found->kw, args_kw_t, key, ARGS_NT );
+				int k = args_find ( tok, found->kw, args_keyword_t, key, ARGS_NT );
 
 				if ( k < 0 )
 				{
@@ -519,7 +519,7 @@ static int walk_tree ( command_t  *root,
 		}
 	}
 
-	w->table           = table;
+	w->table    = table;
 	w->found_in = found_in;
 
 	return 0;
@@ -528,9 +528,9 @@ static int walk_tree ( command_t  *root,
 /* readline-style match list: [0] is the common prefix (the single match when
  * there is only one), [1..] are the matches, NULL-terminated. Frees `v` and
  * returns NULL when there are no matches. n is the number of matches. */
-static char **args_match_list (
-	char  **v,
-	size_t  n
+static char **__match_list (
+	char **v,
+	size_t n
 ) {
 
 	if ( n == 0 )
@@ -575,9 +575,9 @@ static char **args_match_list (
 }
 
 /* names of `table` starting with `text` */
-static char **args_complete_commands (
-	const command_t *table,
-	const char      *text
+static char **__complete_commands (
+	const args_command_t *table,
+	const char           *text
 ) {
 
 	size_t count = 0;
@@ -602,14 +602,14 @@ static char **args_complete_commands (
 		}
 	}
 
-	return args_match_list ( v, n );
+	return __match_list ( v, n );
 }
 
 /* keywords of `kw` starting with `text` that are not marked in `used` yet */
-static char **args_complete_keywords (
-	const args_kw_t *kw,
-	unsigned long    used,
-	const char      *text
+static char **__complete_keywords (
+	const args_keyword_t *kw,
+	unsigned long         used,
+	const char           *text
 ) {
 
 	size_t count = 0;
@@ -638,11 +638,11 @@ static char **args_complete_keywords (
 		}
 	}
 
-	return args_match_list ( v, n );
+	return __match_list ( v, n );
 }
 
 /* Stub - real help output (description, usage, examples) goes here later */
-static void print_help ( command_t *cmd ) {
+static void __print_help ( args_command_t *cmd ) {
 	printf ( "\n%s\n", cmd->name );
 
 	if ( cmd->help != NULL )
@@ -661,10 +661,10 @@ static void print_help ( command_t *cmd ) {
  *   start  - offset of `text` in `line`
  * Returns a match list for readline, or NULL. */
 static char **args_complete (
-	context_t  *ctx,
-	const char *line,
-	const char *text,
-	int         start
+	args_context_t *ctx,
+	const char     *line,
+	const char     *text,
+	int             start
 ) {
 	rl_attempted_completion_over = 1;
 
@@ -678,8 +678,8 @@ static char **args_complete (
 	memcpy ( completed_part, line, len );
 	completed_part[len] = '\0';
 
-	walk_t w;
-	if ( walk_tree ( ctx->repl->root, completed_part, &w ) != 0 )
+	args_walk_t w;
+	if ( __args_walk_tree ( ctx->repl->root, completed_part, &w ) != 0 )
 	{
 		return NULL;
 	}
@@ -691,19 +691,19 @@ static char **args_complete (
 		{
 			if ( text[0] == '\0' )
 			{
-				print_help ( w.leaf );
+				__print_help ( w.leaf );
 				rl_forced_update_display( );
 			}
 			return NULL;
 		}
 
-		return args_complete_keywords ( w.kw, w.used, text );
+		return __complete_keywords ( w.kw, w.used, text );
 	}
 
 	if ( text[0] == '\0' && w.leaf != NULL && w.leaf->fn != NULL
-		 && is_terminal_leaf ( w.leaf, w.found_in ) )
+		 && __is_terminal_leaf ( w.leaf, w.found_in ) )
 	{
-		print_help ( w.leaf );
+		__print_help ( w.leaf );
 		rl_forced_update_display( );
 		return NULL;
 	}
@@ -713,7 +713,7 @@ static char **args_complete (
 		return NULL;
 	}
 
-	return args_complete_commands ( w.table, text );
+	return __complete_commands ( w.table, text );
 }
 
 #endif /* ARGS_REPL */

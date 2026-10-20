@@ -24,9 +24,9 @@
  *   ip neigh add|del <addr> [lladdr <mac>] dev <if>
  *   ip neigh show [dev <if>]
  *
- * The dispatcher consumes the fixed positional arguments (command_t.args);
+ * The dispatcher consumes the fixed positional arguments (args_command_t.args);
  * everything after them is a list of "keyword [value]" pairs which the
- * handler parses with args_parse_kw().
+ * handler parses with args_parse_keyword().
  */
 
 /* ---- value validators ---------------------------------------------------- */
@@ -122,7 +122,10 @@ static const char *ip_family_name ( int family ) {
 	return family == AF_INET ? "ipv4" : "ipv6";
 }
 
-__attribute__ ( ( format ( printf, 3, 4 ) ) ) static void ip_cat (
+__attribute__ ( ( format ( printf,
+						   3,
+						   4 ) ) ) static void
+ip_cat (
 	char       *buf,
 	size_t      size,
 	const char *fmt,
@@ -143,14 +146,26 @@ __attribute__ ( ( format ( printf, 3, 4 ) ) ) static void ip_cat (
 
 /* ---- keyword tables shared by several commands --------------------------- */
 
-static args_kw_t ip_dev_kw[]     = { { "dev", 0, 0, NULL }, { NULL } }; /* dev optional */
-static args_kw_t ip_dev_req_kw[] = { { "dev", 0, 1, NULL }, { NULL } }; /* dev required */
+static args_keyword_t ip_dev_kw[] = {
+	{ "dev", 0, 0, NULL },
+	{ NULL }
+}; /* dev optional */
+static args_keyword_t ip_dev_req_kw[] = {
+	{ "dev", 0, 1, NULL },
+	{ NULL }
+}; /* dev required */
 
 /* ---- ip addr ------------------------------------------------------------- */
 
-enum { ADDR_DEV, ADDR_LABEL, ADDR_BRD, ADDR_N };
+enum
+{
+	ADDR_DEV,
+	ADDR_LABEL,
+	ADDR_BRD,
+	ADDR_N
+};
 
-static args_kw_t ip_addr_add_kw[] = {
+static args_keyword_t ip_addr_add_kw[] = {
 	[ADDR_DEV]   = { "dev", 0, 1, NULL },
 	[ADDR_LABEL] = { "label", 0, 0, NULL },
 	[ADDR_BRD]   = { "broadcast", 0, 0, NULL },
@@ -158,19 +173,22 @@ static args_kw_t ip_addr_add_kw[] = {
 };
 
 /* label and broadcast make sense only for "add" */
-static args_kw_t ip_addr_del_kw[] = { { "dev", 0, 1, NULL }, { NULL } };
+static args_keyword_t ip_addr_del_kw[] = {
+	{ "dev", 0, 1, NULL },
+	{ NULL }
+};
 
 static int ip_addr_modify (
-	context_t *ctx,
-	int        add
+	args_context_t *ctx,
+	int             add
 ) {
 
 	const char *addr = ctx->av->tokens[ctx->idx];
 	int         family, plen;
 
-	args_kw_t *kw = ctx->command->kw;
+	args_keyword_t *kw = ctx->command->kw;
 
-	if ( args_parse_kw ( ctx ) != 0 )
+	if ( args_parse_keyword ( ctx ) != 0 )
 	{
 		return -1;
 	}
@@ -202,9 +220,7 @@ static int ip_addr_modify (
 	}
 
 	char msg[192] = "";
-	ip_cat ( msg, sizeof ( msg ), "%s address %s (%s, /%d) %s device %s",
-			 add ? "add" : "delete", addr, ip_family_name ( family ), plen,
-			 add ? "to" : "from", kw[ADDR_DEV].val );
+	ip_cat ( msg, sizeof ( msg ), "%s address %s (%s, /%d) %s device %s", add ? "add" : "delete", addr, ip_family_name ( family ), plen, add ? "to" : "from", kw[ADDR_DEV].val );
 	if ( label != NULL )
 	{
 		ip_cat ( msg, sizeof ( msg ), ", label %s", label );
@@ -218,13 +234,14 @@ static int ip_addr_modify (
 	return 0;
 }
 
-static int ip_addr_add ( context_t *ctx ) { return ip_addr_modify ( ctx, 1 ); }
-static int ip_addr_del ( context_t *ctx ) { return ip_addr_modify ( ctx, 0 ); }
+static int ip_addr_add ( args_context_t *ctx ) { return ip_addr_modify ( ctx, 1 ); }
 
-static int ip_addr_show ( context_t *ctx ) {
-	args_kw_t *kw = ctx->command->kw;
+static int ip_addr_del ( args_context_t *ctx ) { return ip_addr_modify ( ctx, 0 ); }
 
-	if ( args_parse_kw ( ctx ) != 0 )
+static int ip_addr_show ( args_context_t *ctx ) {
+	args_keyword_t *kw = ctx->command->kw;
+
+	if ( args_parse_keyword ( ctx ) != 0 )
 	{
 		return -1;
 	}
@@ -244,10 +261,10 @@ static int ip_addr_show ( context_t *ctx ) {
 	return 0;
 }
 
-static int ip_addr_flush ( context_t *ctx ) {
-	args_kw_t *kw = ctx->command->kw;
+static int ip_addr_flush ( args_context_t *ctx ) {
+	args_keyword_t *kw = ctx->command->kw;
 
-	if ( args_parse_kw ( ctx ) != 0 )
+	if ( args_parse_keyword ( ctx ) != 0 )
 	{
 		return -1;
 	}
@@ -261,19 +278,27 @@ static int ip_addr_flush ( context_t *ctx ) {
 	return 0;
 }
 
-static command_t ip_addr_table[] = {
-	{ "add",   ip_addr_add,   NULL, 1, "add <addr>[/plen] dev <if> [label <s>] [broadcast <addr>]", ip_addr_add_kw },
-	{ "del",   ip_addr_del,   NULL, 1, "del <addr>[/plen] dev <if>", ip_addr_del_kw },
-	{ "show",  ip_addr_show,  NULL, 0, "show [dev <if>]", ip_dev_kw },
+static args_command_t ip_addr_table[] = {
+	{ "add", ip_addr_add, NULL, 1, "add <addr>[/plen] dev <if> [label <s>] [broadcast <addr>]", ip_addr_add_kw },
+	{ "del", ip_addr_del, NULL, 1, "del <addr>[/plen] dev <if>", ip_addr_del_kw },
+	{ "show", ip_addr_show, NULL, 0, "show [dev <if>]", ip_dev_kw },
 	{ "flush", ip_addr_flush, NULL, 0, "flush dev <if>", ip_dev_req_kw },
-	{ NULL,    NULL,          NULL, 0, NULL                                                        },
+	{ NULL, NULL, NULL, 0, NULL },
 };
 
 /* ---- ip route ------------------------------------------------------------ */
 
-enum { RT_VIA, RT_DEV, RT_SRC, RT_METRIC, RT_ONLINK, RT_N };
+enum
+{
+	RT_VIA,
+	RT_DEV,
+	RT_SRC,
+	RT_METRIC,
+	RT_ONLINK,
+	RT_N
+};
 
-static args_kw_t ip_route_kw[] = {
+static args_keyword_t ip_route_kw[] = {
 	[RT_VIA]    = { "via", 0, 0, NULL },
 	[RT_DEV]    = { "dev", 0, 0, NULL },
 	[RT_SRC]    = { "src", 0, 0, NULL },
@@ -283,18 +308,18 @@ static args_kw_t ip_route_kw[] = {
 };
 
 static int ip_route_modify (
-	context_t  *ctx,
-	const char *verb
+	args_context_t *ctx,
+	const char     *verb
 ) {
 
-	const char *dest       = ctx->av->tokens[ctx->idx];
-	int         is_default = strcmp ( dest, "default" ) == 0;
-	int         family     = AF_INET, plen = 0, dummy;
+	const char   *dest       = ctx->av->tokens[ctx->idx];
+	int           is_default = strcmp ( dest, "default" ) == 0;
+	int           family = AF_INET, plen = 0, dummy;
 	unsigned long metric;
 
-	args_kw_t *kw = ctx->command->kw;
+	args_keyword_t *kw = ctx->command->kw;
 
-	if ( args_parse_kw ( ctx ) != 0 )
+	if ( args_parse_keyword ( ctx ) != 0 )
 	{
 		return -1;
 	}
@@ -360,8 +385,7 @@ static int ip_route_modify (
 		ip_cat ( msg, sizeof ( msg ), "%s default route (%s)", verb, ip_family_name ( family ) );
 	} else
 	{
-		ip_cat ( msg, sizeof ( msg ), "%s route to %s %s (%s)", verb,
-				 plen == ( family == AF_INET ? 32 : 128 ) ? "host" : "network", dest, ip_family_name ( family ) );
+		ip_cat ( msg, sizeof ( msg ), "%s route to %s %s (%s)", verb, plen == ( family == AF_INET ? 32 : 128 ) ? "host" : "network", dest, ip_family_name ( family ) );
 	}
 	if ( kw[RT_VIA].val != NULL )
 	{
@@ -388,14 +412,16 @@ static int ip_route_modify (
 	return 0;
 }
 
-static int ip_route_add ( context_t *ctx ) { return ip_route_modify ( ctx, "add" ); }
-static int ip_route_del ( context_t *ctx ) { return ip_route_modify ( ctx, "delete" ); }
-static int ip_route_replace ( context_t *ctx ) { return ip_route_modify ( ctx, "replace" ); }
+static int ip_route_add ( args_context_t *ctx ) { return ip_route_modify ( ctx, "add" ); }
 
-static int ip_route_show ( context_t *ctx ) {
-	args_kw_t *kw = ctx->command->kw;
+static int ip_route_del ( args_context_t *ctx ) { return ip_route_modify ( ctx, "delete" ); }
 
-	if ( args_parse_kw ( ctx ) != 0 )
+static int ip_route_replace ( args_context_t *ctx ) { return ip_route_modify ( ctx, "replace" ); }
+
+static int ip_route_show ( args_context_t *ctx ) {
+	args_keyword_t *kw = ctx->command->kw;
+
+	if ( args_parse_keyword ( ctx ) != 0 )
 	{
 		return -1;
 	}
@@ -415,11 +441,11 @@ static int ip_route_show ( context_t *ctx ) {
 	return 0;
 }
 
-static int ip_route_get ( context_t *ctx ) {
+static int ip_route_get ( args_context_t *ctx ) {
 	const char *addr = ctx->av->tokens[ctx->idx];
 	int         family;
 
-	if ( args_parse_kw ( ctx ) != 0 )
+	if ( args_parse_keyword ( ctx ) != 0 )
 	{
 		return -1;
 	}
@@ -433,20 +459,27 @@ static int ip_route_get ( context_t *ctx ) {
 	return 0;
 }
 
-static command_t ip_route_table[] = {
-	{ "add",     ip_route_add,     NULL, 1, "add <dest|default> [via <gw>] [dev <if>] [src <addr>] [metric <n>] [onlink]", ip_route_kw },
-	{ "del",     ip_route_del,     NULL, 1, "del <dest|default> [via <gw>] [dev <if>]", ip_route_kw },
+static args_command_t ip_route_table[] = {
+	{ "add", ip_route_add, NULL, 1, "add <dest|default> [via <gw>] [dev <if>] [src <addr>] [metric <n>] [onlink]", ip_route_kw },
+	{ "del", ip_route_del, NULL, 1, "del <dest|default> [via <gw>] [dev <if>]", ip_route_kw },
 	{ "replace", ip_route_replace, NULL, 1, "replace <dest|default> [via <gw>] [dev <if>] [metric <n>]", ip_route_kw },
-	{ "show",    ip_route_show,    NULL, 0, "show [dev <if>]", ip_dev_kw },
-	{ "get",     ip_route_get,     NULL, 1, "get <addr>"                                                                },
-	{ NULL,      NULL,             NULL, 0, NULL                                                                        },
+	{ "show", ip_route_show, NULL, 0, "show [dev <if>]", ip_dev_kw },
+	{ "get", ip_route_get, NULL, 1, "get <addr>" },
+	{ NULL, NULL, NULL, 0, NULL },
 };
 
 /* ---- ip link ------------------------------------------------------------- */
 
-enum { LINK_UP, LINK_DOWN, LINK_MTU, LINK_NAME, LINK_N };
+enum
+{
+	LINK_UP,
+	LINK_DOWN,
+	LINK_MTU,
+	LINK_NAME,
+	LINK_N
+};
 
-static args_kw_t ip_link_set_kw[] = {
+static args_keyword_t ip_link_set_kw[] = {
 	[LINK_UP]   = { "up", 1, 0, NULL },
 	[LINK_DOWN] = { "down", 1, 0, NULL },
 	[LINK_MTU]  = { "mtu", 0, 0, NULL },
@@ -454,13 +487,13 @@ static args_kw_t ip_link_set_kw[] = {
 	[LINK_N]    = { NULL },
 };
 
-static int ip_link_set ( context_t *ctx ) {
-	const char *dev = ctx->av->tokens[ctx->idx];
+static int ip_link_set ( args_context_t *ctx ) {
+	const char   *dev = ctx->av->tokens[ctx->idx];
 	unsigned long mtu = 0;
 
-	args_kw_t *kw = ctx->command->kw;
+	args_keyword_t *kw = ctx->command->kw;
 
-	if ( args_parse_kw ( ctx ) != 0 )
+	if ( args_parse_keyword ( ctx ) != 0 )
 	{
 		return -1;
 	}
@@ -519,10 +552,10 @@ static int ip_link_set ( context_t *ctx ) {
 	return 0;
 }
 
-static int ip_link_show ( context_t *ctx ) {
-	args_kw_t *kw = ctx->command->kw;
+static int ip_link_show ( args_context_t *ctx ) {
+	args_keyword_t *kw = ctx->command->kw;
 
-	if ( args_parse_kw ( ctx ) != 0 )
+	if ( args_parse_keyword ( ctx ) != 0 )
 	{
 		return -1;
 	}
@@ -542,39 +575,44 @@ static int ip_link_show ( context_t *ctx ) {
 	return 0;
 }
 
-static command_t ip_link_table[] = {
-	{ "set",  ip_link_set,  NULL, 1, "set <if> [up|down] [mtu <n>] [name <new>]", ip_link_set_kw },
+static args_command_t ip_link_table[] = {
+	{ "set", ip_link_set, NULL, 1, "set <if> [up|down] [mtu <n>] [name <new>]", ip_link_set_kw },
 	{ "show", ip_link_show, NULL, 0, "show [dev <if>]", ip_dev_kw },
-	{ NULL,   NULL,         NULL, 0, NULL                                         },
+	{ NULL, NULL, NULL, 0, NULL },
 };
 
 /* ---- ip neigh ------------------------------------------------------------ */
 
-enum { NB_DEV, NB_LLADDR, NB_N };
+enum
+{
+	NB_DEV,
+	NB_LLADDR,
+	NB_N
+};
 
-static args_kw_t ip_neigh_add_kw[] = {
+static args_keyword_t ip_neigh_add_kw[] = {
 	[NB_DEV]    = { "dev", 0, 1, NULL },
 	[NB_LLADDR] = { "lladdr", 0, 1, NULL },
 	[NB_N]      = { NULL },
 };
 
-static args_kw_t ip_neigh_del_kw[] = {
+static args_keyword_t ip_neigh_del_kw[] = {
 	[NB_DEV]    = { "dev", 0, 1, NULL },
 	[NB_LLADDR] = { "lladdr", 0, 0, NULL },
 	[NB_N]      = { NULL },
 };
 
 static int ip_neigh_modify (
-	context_t *ctx,
-	int        add
+	args_context_t *ctx,
+	int             add
 ) {
 
 	const char *addr = ctx->av->tokens[ctx->idx];
 	int         family;
 
-	args_kw_t *kw = ctx->command->kw;
+	args_keyword_t *kw = ctx->command->kw;
 
-	if ( args_parse_kw ( ctx ) != 0 )
+	if ( args_parse_keyword ( ctx ) != 0 )
 	{
 		return -1;
 	}
@@ -609,13 +647,14 @@ static int ip_neigh_modify (
 	return 0;
 }
 
-static int ip_neigh_add ( context_t *ctx ) { return ip_neigh_modify ( ctx, 1 ); }
-static int ip_neigh_del ( context_t *ctx ) { return ip_neigh_modify ( ctx, 0 ); }
+static int ip_neigh_add ( args_context_t *ctx ) { return ip_neigh_modify ( ctx, 1 ); }
 
-static int ip_neigh_show ( context_t *ctx ) {
-	args_kw_t *kw = ctx->command->kw;
+static int ip_neigh_del ( args_context_t *ctx ) { return ip_neigh_modify ( ctx, 0 ); }
 
-	if ( args_parse_kw ( ctx ) != 0 )
+static int ip_neigh_show ( args_context_t *ctx ) {
+	args_keyword_t *kw = ctx->command->kw;
+
+	if ( args_parse_keyword ( ctx ) != 0 )
 	{
 		return -1;
 	}
@@ -635,23 +674,23 @@ static int ip_neigh_show ( context_t *ctx ) {
 	return 0;
 }
 
-static command_t ip_neigh_table[] = {
-	{ "add",  ip_neigh_add,  NULL, 1, "add <addr> lladdr <mac> dev <if>", ip_neigh_add_kw },
-	{ "del",  ip_neigh_del,  NULL, 1, "del <addr> [lladdr <mac>] dev <if>", ip_neigh_del_kw },
+static args_command_t ip_neigh_table[] = {
+	{ "add", ip_neigh_add, NULL, 1, "add <addr> lladdr <mac> dev <if>", ip_neigh_add_kw },
+	{ "del", ip_neigh_del, NULL, 1, "del <addr> [lladdr <mac>] dev <if>", ip_neigh_del_kw },
 	{ "show", ip_neigh_show, NULL, 0, "show [dev <if>]", ip_dev_kw },
-	{ NULL,   NULL,          NULL, 0, NULL                              },
+	{ NULL, NULL, NULL, 0, NULL },
 };
 
 /* ---- ip ------------------------------------------------------------------ */
 
-static command_t ip_table[] = {
-	{ "addr",  NULL, ip_addr_table,  0, "Protocol addresses"        },
-	{ "route", NULL, ip_route_table, 0, "Routing table"             },
-	{ "link",  NULL, ip_link_table,  0, "Network devices"           },
+static args_command_t ip_table[] = {
+	{ "addr",  NULL, ip_addr_table,  0, "Protocol addresses"          },
+	{ "route", NULL, ip_route_table, 0, "Routing table"               },
+	{ "link",  NULL, ip_link_table,  0, "Network devices"             },
 	{ "neigh", NULL, ip_neigh_table, 0, "ARP / NDISC neighbour cache" },
-	{ NULL,    NULL, NULL,           0, NULL                        },
+	{ NULL,    NULL, NULL,           0, NULL                          },
 };
 
-const command_t ip = { .name = "ip", .fn = NULL, .next = ip_table };
+const args_command_t ip = { .name = "ip", .fn = NULL, .next = ip_table };
 
 #endif

@@ -10,7 +10,7 @@
 #include "commands/power.h"
 
 /* main input */
-command_t cmd_table[] = {
+args_command_t cmd_table[] = {
 	chassis,
 	power,
 	info,
@@ -44,8 +44,8 @@ int main (
 		return 1;
 	}
 
-	argv_t    av;
-	context_t ctx = {
+	args_argv_t    av;
+	args_context_t ctx = {
 		.av      = &av,
 		.line    = line,
 		.command = cmd_table,

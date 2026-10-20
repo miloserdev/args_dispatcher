@@ -11,7 +11,7 @@
 #include "commands/power.h"
 
 /* main input */
-command_t cmd_table[] = {
+args_command_t cmd_table[] = {
 	chassis,
 	power,
 	info,
@@ -21,9 +21,9 @@ command_t cmd_table[] = {
 
 /* readline callbacks carry no user data, so the context lives here and is
  * reused for every line */
-static args_context_repl repl = { .root = cmd_table };
-static argv_t            av;
-static context_t         ctx = { .av = &av, .repl = &repl };
+static args_context_repl_t repl = { .root = cmd_table };
+static args_argv_t         av;
+static args_context_t      ctx = { .av = &av, .repl = &repl };
 
 static char **complete (
 	const char *text,
