@@ -1,0 +1,75 @@
+---
+ContinuationIndentWidth: 4
+PackConstructorInitializers: NextLineOnly
+AlignAfterOpenBracket: BlockIndent
+BinPackParameters: AlwaysOnePerLine
+#ExperimentalAutoDetectBinPacking: true
+# AlignAfterOpenBracket: BlockIndent
+IndentPPDirectives: BeforeHash
+AlignConsecutiveMacros:
+  Enabled: true
+  AcrossEmptyLines: true
+  AcrossComments: true
+  AlignCompound: false
+  AlignFunctionPointers: false
+  PadOperators: true
+InsertBraces: true
+AlignConsecutiveDeclarations:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: false
+  AlignFunctionPointers: true
+  AlignCompound: true
+  PadOperators: true
+AlignConsecutiveAssignments:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: false
+  AlignFunctionPointers: true
+  AlignCompound: true
+  PadOperators: true
+SpaceBeforeAssignmentOperators: true
+AlignArrayOfStructures: Left
+Cpp11BracedListStyle: false
+SpaceAfterCStyleCast: true
+IndentCaseLabels: true
+SpaceBeforeCaseColon: true
+SpaceInEmptyParentheses: true
+SpaceInEmptyBlock: true
+SpaceBeforeSquareBrackets: false
+SpaceBeforeParens: Custom
+SpaceBeforeParensOptions:
+  AfterControlStatements: true
+  AfterFunctionDefinitionName: true
+  AfterFunctionDeclarationName: true
+  AfterIfMacros: true
+  BeforeNonEmptyParentheses: true
+  AfterRequiresInExpression: true
+  AfterPlacementOperator: true
+SpacesInParentheses: true
+SpacesInAngles: false
+SpacesBeforeTrailingComments: 4
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterClass: true
+  AfterFunction: false
+  AfterControlStatement: true
+  AfterEnum: true
+  AfterStruct: true
+  SplitEmptyFunction: true
+  AfterCaseLabel: true
+# KeepEmptyLinesAtTheStartOfBlocks: false
+AlwaysBreakBeforeMultilineStrings: false
+BreakBeforeBinaryOperators: true
+BitFieldColonSpacing: Both
+AlignConsecutiveBitFields:
+  Enabled: true
+  AcrossEmptyLines: true
+  AcrossComments: false
+BreakArrays: true
+SeparateDefinitionBlocks: Always
+UseTab: ForContinuationAndIndentation
+IndentWidth: 4
+TabWidth: 4
+ColumnLimit: 0
+InsertNewlineAtEOF: true
