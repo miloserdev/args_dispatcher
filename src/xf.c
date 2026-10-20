@@ -1,4 +1,3 @@
-
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
@@ -7,6 +6,7 @@
 
 #include "commands/chassis.h"
 #include "commands/info.h"
+#include "commands/ip.h"
 #include "commands/power.h"
 
 /* main input */
@@ -14,6 +14,7 @@ command_t cmd_table[] = {
 	chassis,
 	power,
 	info,
+	ip,
 	NULL,
 };
 
@@ -35,10 +36,18 @@ int main (
 	// 	.fn = logger,
 	// };
 
+	char  buf[MAX_LINE];
+	char *line = args_parse ( buf, sizeof ( buf ), argc, argv );
+	if ( line == NULL )
+	{
+		fprintf ( stderr, "error: command line too long (max %d)\n", MAX_LINE - 1 );
+		return 1;
+	}
+
 	argv_t    av;
 	context_t ctx = {
 		.av      = &av,
-		.line    = args_parse ( argc, argv ),
+		.line    = line,
 		.command = cmd_table,
 		// .data    = data,
 	};
@@ -54,4 +63,5 @@ int main (
 	args_dispatch ( &ctx );
 
 	printf ( "\n" );
+	return 0;
 }

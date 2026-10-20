@@ -4,19 +4,20 @@ LDLIBS  = -lreadline
 PREFIX  ?= /usr/local
 
 SRC_DIR = src
+HEADERS = $(wildcard $(SRC_DIR)/*.h $(SRC_DIR)/commands/*.h)
 BUILD   = build
 
-.PHONY: all install clean
+.PHONY: all install clean test
 
 all: $(BUILD)/xf $(BUILD)/xf_repl
 
 $(BUILD):
 	mkdir -p $@
 
-$(BUILD)/xf: $(SRC_DIR)/xf.c | $(BUILD)
+$(BUILD)/xf: $(SRC_DIR)/xf.c $(HEADERS) | $(BUILD)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $<
 
-$(BUILD)/xf_repl: $(SRC_DIR)/xf_repl.c | $(BUILD)
+$(BUILD)/xf_repl: $(SRC_DIR)/xf_repl.c $(HEADERS) | $(BUILD)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LDLIBS)
 
 install: all
@@ -25,3 +26,5 @@ install: all
 
 clean:
 	rm -rf $(BUILD)
+test: all
+	tests/run.sh
