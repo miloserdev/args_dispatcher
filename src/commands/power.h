@@ -24,10 +24,10 @@ static int power_status ( args_context_t *ctx ) {
 }
 
 static args_command_t power_table[] = {
-	{ "status", power_status, NULL, 0, "Show power status"     },
-	{ "on",     power_on,     NULL, 0, "Power on the chassis"  },
-	{ "off",    power_off,    NULL, 0, "Power off the chassis" },
-	{ NULL,     NULL,         NULL, 0, NULL                    },
+	{ "status", power_status, NULL, 0, "Show power status", NULL },
+	{ "on",     power_on,     NULL, 0, "Power on the chassis", NULL },
+	{ "off",    power_off,    NULL, 0, "Power off the chassis", NULL },
+	{ NULL,     NULL,         NULL, 0, NULL, NULL },
 };
 
 const args_command_t power = { .name = "power", .fn = NULL, .next = power_table };

@@ -5,7 +5,7 @@
 	printf ( "[dbg] %s:%d: " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__ )
 
 #define log( fmt, ... )                                            \
-	for ( size_t i = 0; i < ctx->depth + 0; i++, printf ( "  " ) ) \
+	for ( int i = 0; i < ctx->depth + 0; i++, printf ( "  " ) ) \
 		;                                                          \
 	printf ( "" fmt " \n", ##__VA_ARGS__ )
 
@@ -16,7 +16,7 @@
 #else
 
 	#define log_info( fmt, ... )                                       \
-		for ( size_t i = 0; i < ctx->depth + 1; i++, printf ( "  " ) ) \
+		for ( int i = 0; i < ctx->depth + 1; i++, printf ( "  " ) ) \
 			;                                                          \
 		printf ( "" fmt " \n", ##__VA_ARGS__ )
 

@@ -34,12 +34,12 @@ static int chassis_policy ( args_context_t *ctx ) {
 }
 
 static args_command_t chassis_table[] = {
-	{ "status",   chassis_status,   NULL, 0, "Show chassis power status"             },
-	{ "identify", chassis_identify, NULL, 1, "Blink identify LED [on|off|<sec>]"     },
-	{ "bootdev",  chassis_bootdev,  NULL, 1, "Set boot device <pxe|disk|cdrom|bios>" },
-	{ "policy",   chassis_policy,   NULL, 1, "Power restore policy"                  },
-	{ "asd",      NULL,             NULL, 1, NULL									},
-	{ NULL,       NULL,             NULL, 0, NULL									},
+	{ "status",   chassis_status,   NULL, 0, "Show chassis power status", NULL },
+	{ "identify", chassis_identify, NULL, 1, "Blink identify LED [on|off|<sec>]", NULL },
+	{ "bootdev",  chassis_bootdev,  NULL, 1, "Set boot device <pxe|disk|cdrom|bios>", NULL },
+	{ "policy",   chassis_policy,   NULL, 1, "Power restore policy", NULL },
+	{ "asd",      NULL,             NULL, 1, NULL, NULL },
+	{ NULL,       NULL,             NULL, 0, NULL, NULL },
 };
 
 static int chassis_fn ( args_context_t *ctx ) {

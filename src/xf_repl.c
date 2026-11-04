@@ -16,7 +16,7 @@ args_command_t cmd_table[] = {
 	power,
 	info,
 	ip,
-	NULL,
+	{ .name = NULL },
 };
 
 /* readline callbacks carry no user data, so the context lives here and is

@@ -283,7 +283,7 @@ static args_command_t ip_addr_table[] = {
 	{ "del", ip_addr_del, NULL, 1, "del <addr>[/plen] dev <if>", ip_addr_del_kw },
 	{ "show", ip_addr_show, NULL, 0, "show [dev <if>]", ip_dev_kw },
 	{ "flush", ip_addr_flush, NULL, 0, "flush dev <if>", ip_dev_req_kw },
-	{ NULL, NULL, NULL, 0, NULL },
+	{ NULL, NULL, NULL, 0, NULL, NULL },
 };
 
 /* ---- ip route ------------------------------------------------------------ */
@@ -464,8 +464,8 @@ static args_command_t ip_route_table[] = {
 	{ "del", ip_route_del, NULL, 1, "del <dest|default> [via <gw>] [dev <if>]", ip_route_kw },
 	{ "replace", ip_route_replace, NULL, 1, "replace <dest|default> [via <gw>] [dev <if>] [metric <n>]", ip_route_kw },
 	{ "show", ip_route_show, NULL, 0, "show [dev <if>]", ip_dev_kw },
-	{ "get", ip_route_get, NULL, 1, "get <addr>" },
-	{ NULL, NULL, NULL, 0, NULL },
+	{ "get", ip_route_get, NULL, 1, "get <addr>", NULL },
+	{ NULL, NULL, NULL, 0, NULL, NULL },
 };
 
 /* ---- ip link ------------------------------------------------------------- */
@@ -578,7 +578,7 @@ static int ip_link_show ( args_context_t *ctx ) {
 static args_command_t ip_link_table[] = {
 	{ "set", ip_link_set, NULL, 1, "set <if> [up|down] [mtu <n>] [name <new>]", ip_link_set_kw },
 	{ "show", ip_link_show, NULL, 0, "show [dev <if>]", ip_dev_kw },
-	{ NULL, NULL, NULL, 0, NULL },
+	{ NULL, NULL, NULL, 0, NULL, NULL },
 };
 
 /* ---- ip neigh ------------------------------------------------------------ */
@@ -678,17 +678,17 @@ static args_command_t ip_neigh_table[] = {
 	{ "add", ip_neigh_add, NULL, 1, "add <addr> lladdr <mac> dev <if>", ip_neigh_add_kw },
 	{ "del", ip_neigh_del, NULL, 1, "del <addr> [lladdr <mac>] dev <if>", ip_neigh_del_kw },
 	{ "show", ip_neigh_show, NULL, 0, "show [dev <if>]", ip_dev_kw },
-	{ NULL, NULL, NULL, 0, NULL },
+	{ NULL, NULL, NULL, 0, NULL, NULL },
 };
 
 /* ---- ip ------------------------------------------------------------------ */
 
 static args_command_t ip_table[] = {
-	{ "addr",  NULL, ip_addr_table,  0, "Protocol addresses"          },
-	{ "route", NULL, ip_route_table, 0, "Routing table"               },
-	{ "link",  NULL, ip_link_table,  0, "Network devices"             },
-	{ "neigh", NULL, ip_neigh_table, 0, "ARP / NDISC neighbour cache" },
-	{ NULL,    NULL, NULL,           0, NULL                          },
+	{ "addr",  NULL, ip_addr_table,  0, "Protocol addresses", NULL },
+	{ "route", NULL, ip_route_table, 0, "Routing table", NULL },
+	{ "link",  NULL, ip_link_table,  0, "Network devices", NULL },
+	{ "neigh", NULL, ip_neigh_table, 0, "ARP / NDISC neighbour cache", NULL },
+	{ NULL,    NULL, NULL,           0, NULL, NULL },
 };
 
 const args_command_t ip = { .name = "ip", .fn = NULL, .next = ip_table };

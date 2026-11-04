@@ -121,7 +121,7 @@ static int args_find_name (
  * return : buf with the arguments joined by spaces,
  *          or NULL if the result does not fit into the buffer
  */
-static char *args_parse (
+static inline char *args_parse (
 	char  *buf,
 	size_t size,
 	int    argc,
@@ -574,6 +574,28 @@ static char **__match_list (
 	return v;
 }
 
+/* strdup() into v[++*n]; on failure frees everything collected so far */
+static int __match_add (
+	char       **v,
+	size_t      *n,
+	const char  *s
+) {
+
+	char *dup = strdup ( s );
+	if ( dup == NULL )
+	{
+		for ( size_t i = 1; i <= *n; i++ )
+		{
+			free ( v[i] );
+		}
+		free ( v );
+		return -1;
+	}
+
+	v[++*n] = dup;
+	return 0;
+}
+
 /* names of `table` starting with `text` */
 static char **__complete_commands (
 	const args_command_t *table,
@@ -598,7 +620,10 @@ static char **__complete_commands (
 	{
 		if ( strncmp ( table[i].name, text, len ) == 0 )
 		{
-			v[++n] = strdup ( table[i].name );
+			if ( __match_add ( v, &n, table[i].name ) != 0 )
+			{
+				return NULL;
+			}
 		}
 	}
 
@@ -634,7 +659,10 @@ static char **__complete_keywords (
 		}
 		if ( strncmp ( kw[k].key, text, len ) == 0 )
 		{
-			v[++n] = strdup ( kw[k].key );
+			if ( __match_add ( v, &n, kw[k].key ) != 0 )
+			{
+				return NULL;
+			}
 		}
 	}
 

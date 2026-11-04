@@ -29,6 +29,7 @@ const char splash[] = "                                                         
 					  "                                 ███                            \n";
 
 static int info_splash ( args_context_t *ctx ) {
+	(void) ctx;
 	printf ( "%s", splash );
 	return 0;
 }
@@ -45,10 +46,10 @@ static int info_show ( args_context_t *ctx ) {
 }
 
 static args_command_t info_table[] = {
-	{ "set",    info_set,    info_table, 2, "set <what> <to>" },
-	{ "show",   info_show,   info_table, 1, "Show info"       },
-	{ "splash", info_splash, info_table, 0, "Show splash"     },
-	{ NULL,     NULL,        NULL,       0, NULL              },
+	{ "set",    info_set,    info_table, 2, "set <what> <to>", NULL },
+	{ "show",   info_show,   info_table, 1, "Show info", NULL },
+	{ "splash", info_splash, info_table, 0, "Show splash", NULL },
+	{ NULL,     NULL,        NULL,       0, NULL, NULL },
 };
 
 const args_command_t info = { .name = "info", .fn = NULL, .next = info_table };

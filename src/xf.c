@@ -15,7 +15,7 @@ args_command_t cmd_table[] = {
 	power,
 	info,
 	ip,
-	NULL,
+	{ .name = NULL },
 };
 
 int main (
@@ -24,7 +24,7 @@ int main (
 ) {
 
 	printf ( "┌─<" );
-	for ( size_t i = 0; i < argc; i++ )
+	for ( int i = 0; i < argc; i++ )
 	{
 		printf ( "%s ", argv[i] );
 	}

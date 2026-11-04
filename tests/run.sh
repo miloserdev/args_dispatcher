@@ -18,8 +18,9 @@ cc $CFLAGS_T -Itests -o "$B/xf_test" tests/xf_test.c 2>/dev/null || { echo "xf_t
 HAVE_SAN=0
 if cc $CFLAGS_T $SAN -o "$B/xf_asan" src/xf.c 2>/dev/null \
    && cc $CFLAGS_T $SAN -o "$B/xf_repl_asan" src/xf_repl.c -lreadline 2>/dev/null \
-   && cc $CFLAGS_T $SAN -Itests -o "$B/xf_test_asan" tests/xf_test.c 2>/dev/null; then HAVE_SAN=1; fi
-export ASAN_OPTIONS=detect_leaks=0
+   && cc $CFLAGS_T $SAN -Itests -o "$B/xf_test_asan" tests/xf_test.c 2>/dev/null \
+   && cc $CFLAGS_T $SAN -o "$B/comp_leak_asan" tests/comp_leak.c -lreadline 2>/dev/null; then HAVE_SAN=1; fi
+export ASAN_OPTIONS=detect_leaks=1
 
 XF=build/xf; REPL=build/xf_repl; XT="$B/xf_test"
 if [ $HAVE_SAN = 1 ]; then XFS="$B/xf_asan"; REPLS="$B/xf_repl_asan"; XTS="$B/xf_test_asan"
@@ -129,7 +130,7 @@ begin "very long command name";                   cli $XFS "$(pad 4000)"; no_cra
 begin "many arguments (1000)";                    cli $XFS $(printf 'x %.0s' $(seq 1000)); no_crash; end
 begin "tab inside a single argument splits tokens"; cli $XFS $'power\ton'; no_crash; has '\[fn\] power on'; end
 begin "trailing tab/space in argument";           cli $XFS power $'on\t '; no_crash; has '\[fn\] power on'; end
-begin "unicode argument";                         cli $XFS power ыы; no_crash; has 'unknown command'; end
+begin "unicode argument";                         cli $XFS power $'\xd1\x8b\xd1\x8b'; no_crash; has 'unknown command'; end
 begin "quoted argument with a space stays one token" $X; cli $XF info set "a b" c; has 'info set a b=c'; end
 begin "only-whitespace argument";                 cli $XFS "   "; no_crash; end
 begin "dispatcher does not overflow on 32 tokens"; cli $XTS chain $(printf 'one %.0s' $(seq 31)); no_crash; end
@@ -304,6 +305,11 @@ for l in "power on" "power off" "power status" "power" "pow on" "p on" "power o"
          "ip route add 10.10.10.1 dev eth0" "ip link set eth0 up" "ip addr add 1.1.1.1/99 dev eth0"; do
 	begin "parity: $l"; parity "$l"; end
 done
+
+echo "== memory: completion allocations (LeakSanitizer)"
+if [ $HAVE_SAN = 1 ]; then
+	begin "args_complete: no leaks, no ASan/UBSan errors"; OUT=$("$B/comp_leak_asan" 2>&1); RC=$?; OUT=$(norm <<<"$OUT"); rc_is 0; has '^ok$'; lacks 'Sanitizer|runtime error'; end
+fi
 
 echo
 printf 'passed %d, failed %d, expected-fail %d, unexpectedly-passed %d\n' $pass $fail $xfail $xpass
