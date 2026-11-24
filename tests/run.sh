@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Test suite for xf (CLI) and xf_repl (REPL).
 #   tests/run.sh            run everything
 #   tests/run.sh -v         also print output of failing cases
 # Cases marked `xfail` document known defects: they are expected to fail
 # and are reported as XFAIL; if they start passing they are reported as XPASS.
 cd "$(dirname "$0")/.." || exit 2
+
+# readline redraws the prompt differently depending on TERM; the checks below
+# (norm strips ANSI escapes) assume xterm-style output
+export TERM=xterm
 
 VERBOSE=0; [ "$1" = "-v" ] && VERBOSE=1
 
@@ -88,9 +93,9 @@ begin "unknown nested command";      cli $XF power xyz; has 'unknown command <xy
 begin "empty-string argument does not crash"; cli $XF ""; no_crash; has 'available commands'; end
 begin "--help / -h is understood" $X; cli $XF -h; lacks 'unknown command'; end
 begin "exit code 0 on success";      cli $XF power on; rc_is 0; end
-begin "exit code != 0 on unknown command" $X;  cli $XF xyz; rc_nz; end
-begin "exit code != 0 on usage error" $X;      cli $XF chassis identify; rc_nz; end
-begin "exit code != 0 on ambiguous command" $X; cli $XF power o; rc_nz; end
+begin "exit code != 0 on unknown command";  cli $XF xyz; rc_nz; end
+begin "exit code != 0 on usage error";      cli $XF chassis identify; rc_nz; end
+begin "exit code != 0 on ambiguous command"; cli $XF power o; rc_nz; end
 
 echo "== CLI: arguments"
 begin "missing argument -> usage";   cli $XF chassis identify; has 'usage: Blink identify'; lacks '\[fn\] chassis identify'; end

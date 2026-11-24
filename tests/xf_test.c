@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later
+ * Copyright (c) 2026 miloserdev */
 /* Test harness: a CLI driver over a synthetic command table that covers
  * cases the real commands do not (exact vs prefix match, handler return
  * values, self-loop chains). Prints RET=<dispatch result>. */

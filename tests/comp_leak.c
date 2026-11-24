@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later
+ * Copyright (c) 2026 miloserdev */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

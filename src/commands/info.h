@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later
+ * Copyright (c) 2026 miloserdev */
 #ifndef __INFO_H__
 #define __INFO_H__
 

@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later
+ * Copyright (c) 2026 miloserdev */
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
@@ -30,12 +32,6 @@ int main (
 	}
 	printf ( ">\n" );
 
-	// printf("𜲐\n");
-
-	// context_data_t data = {
-	// 	.fn = logger,
-	// };
-
 	char  buf[MAX_LINE];
 	char *line = args_parse ( buf, sizeof ( buf ), argc, argv );
 	if ( line == NULL )
@@ -49,7 +45,6 @@ int main (
 		.av      = &av,
 		.line    = line,
 		.command = cmd_table,
-		// .data    = data,
 	};
 
 	if ( args_tokenize ( &ctx ) == 0 )
@@ -60,8 +55,8 @@ int main (
 		return 1;
 	}
 
-	args_dispatch ( &ctx );
+	int ret = args_dispatch ( &ctx );
 
 	printf ( "\n" );
-	return 0;
+	return ret < 0;
 }

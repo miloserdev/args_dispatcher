@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later
+ * Copyright (c) 2026 miloserdev */
 #ifndef __ARGS_H__
 #define __ARGS_H__
 
@@ -28,8 +30,6 @@ typedef struct
 
 typedef struct args_command_t args_command_t;
 typedef struct args_context_t args_context_t;
-
-// typedef int ( *handler_fn ) ( args_context_t *ctx );
 
 struct args_command_t
 {
@@ -209,11 +209,8 @@ static void args_help (
 
 static int args_dispatch ( args_context_t *ctx ) {
 
-	// printf ( "ctx->idx=%d, ctx->av->count=%d \n", ctx->idx, ctx->av->count );
-
 	if ( ctx->idx >= ctx->av->count )
 	{
-		// log_info ( "done " );
 		return 0;
 	}
 
@@ -267,14 +264,11 @@ static int args_dispatch ( args_context_t *ctx ) {
 
 	ctx->idx++;
 
-	// ctx->idx += 1 + ( ctx->command->args != 0 ? ctx->command->args : 0 );
-
 	if ( ctx->command->next == NULL )
 	{
 		return 0; /* leaf without continuation - command fully handled */
 	}
 
-	// need to save! ;
 	int self_loop = ( ctx->command->next == table ); /* .next points to the SAME table the command was looked up in */
 
 	ctx->command = ctx->command->next;
@@ -293,8 +287,6 @@ static int args_dispatch ( args_context_t *ctx ) {
 	}
 
 	int ret = args_dispatch ( ctx );
-
-	// post_call
 
 	if ( !self_loop )
 	{
