@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-2.0-or-later
-# Test suite for xf (CLI) and xf_repl (REPL).
+# Test suite for example (CLI) and example_repl (REPL).
 #   tests/run.sh            run everything
 #   tests/run.sh -v         also print output of failing cases
 # Cases marked `xfail` document known defects: they are expected to fail
@@ -17,19 +17,19 @@ B=build/tests
 mkdir -p "$B"
 make -s >/dev/null 2>&1 || { echo "build failed"; exit 2; }
 
-CFLAGS_T="-O0 -g -Wall -Wextra -Isrc"
+CFLAGS_T="-O0 -g -Wall -Wextra -Isrc -Iexamples"
 SAN="-fsanitize=address,undefined -fno-omit-frame-pointer"
-cc $CFLAGS_T -Itests -o "$B/xf_test" tests/xf_test.c 2>/dev/null || { echo "xf_test build failed"; exit 2; }
+cc $CFLAGS_T -Itests -o "$B/example_test" tests/example_test.c 2>/dev/null || { echo "example_test build failed"; exit 2; }
 HAVE_SAN=0
-if cc $CFLAGS_T $SAN -o "$B/xf_asan" src/xf.c 2>/dev/null \
-   && cc $CFLAGS_T $SAN -o "$B/xf_repl_asan" src/xf_repl.c -lreadline 2>/dev/null \
-   && cc $CFLAGS_T $SAN -Itests -o "$B/xf_test_asan" tests/xf_test.c 2>/dev/null \
+if cc $CFLAGS_T $SAN -o "$B/example_asan" examples/example.c 2>/dev/null \
+   && cc $CFLAGS_T $SAN -o "$B/example_repl_asan" examples/example_repl.c -lreadline 2>/dev/null \
+   && cc $CFLAGS_T $SAN -Itests -o "$B/example_test_asan" tests/example_test.c 2>/dev/null \
    && cc $CFLAGS_T $SAN -o "$B/comp_leak_asan" tests/comp_leak.c -lreadline 2>/dev/null; then HAVE_SAN=1; fi
 export ASAN_OPTIONS=detect_leaks=1
 
-XF=build/xf; REPL=build/xf_repl; XT="$B/xf_test"
-if [ $HAVE_SAN = 1 ]; then XFS="$B/xf_asan"; REPLS="$B/xf_repl_asan"; XTS="$B/xf_test_asan"
-else XFS=$XF; REPLS=$REPL; XTS=$XT; fi
+EX=build/example; REPL=build/example_repl; XT="$B/example_test"
+if [ $HAVE_SAN = 1 ]; then EXS="$B/example_asan"; REPLS="$B/example_repl_asan"; XTS="$B/example_test_asan"
+else EXS=$EX; REPLS=$REPL; XTS=$XT; fi
 
 pass=0; fail=0; xfail=0; xpass=0
 OUT=""; RC=0
@@ -70,48 +70,48 @@ X=xfail
 pad() { head -c "$1" < /dev/zero | tr '\0' 'a'; }
 
 echo "== CLI: basics"
-begin "no args prints usage and tree, rc=1";            cli $XF; has 'available commands'; has '^  chassis'; rc_is 1; end
-begin "power on runs handler, rc=0";                    cli $XF power on; has '\[fn\] power on'; rc_is 0; end
-begin "chassis status: parent fn runs before child";    cli $XF chassis status; has 'chassis scan'; has 'chassis status: ON'; before 'chassis scan' 'chassis status: ON'; end
-begin "chassis alone: runs fn, then lists subcommands"; cli $XF chassis; has 'chassis scan'; has 'available commands'; has 'identify'; lacks '\[fn\] chassis status'; end
-begin "power alone: lists subcommands, no call";        cli $XF power; has 'available commands'; has 'Power on the chassis'; lacks '\[__call\]'; end
+begin "no args prints usage and tree, rc=1";            cli $EX; has 'available commands'; has '^  chassis'; rc_is 1; end
+begin "power on runs handler, rc=0";                    cli $EX power on; has '\[fn\] power on'; rc_is 0; end
+begin "chassis status: parent fn runs before child";    cli $EX chassis status; has 'chassis scan'; has 'chassis status: ON'; before 'chassis scan' 'chassis status: ON'; end
+begin "chassis alone: runs fn, then lists subcommands"; cli $EX chassis; has 'chassis scan'; has 'available commands'; has 'identify'; lacks '\[fn\] chassis status'; end
+begin "power alone: lists subcommands, no call";        cli $EX power; has 'available commands'; has 'Power on the chassis'; lacks '\[__call\]'; end
 
 echo "== CLI: prefix matching"
-begin "prefix: pow on";              cli $XF pow on; has '\[fn\] power on'; end
-begin "prefix: p on";                cli $XF p on; has '\[fn\] power on'; end
-begin "prefix at both levels: ch bootdev pxe"; cli $XF ch bootdev pxe; has 'chassis bootdev=pxe'; end
-begin "ambiguous prefix reports ambiguity";    cli $XF power o; has 'ambiguous command o'; lacks '\[fn\] power'; end
-begin "ambiguous prefix: single error message" $X; cli $XF power o; lacks 'unknown command'; end
-begin "ambiguous prefix: in s (set/show/splash)"; cli $XF in s; has 'ambiguous command s'; end
-begin "ambiguous prefix: single error (in s)" $X; cli $XF in s; lacks 'unknown command'; end
-begin "ambiguous root prefix: i (info/ip)";       cli $XF i s; has 'ambiguous command i'; end
-begin "matching is case-sensitive (documented)"; cli $XF CHASSIS status; has 'unknown command <CHASSIS>'; end
+begin "prefix: pow on";              cli $EX pow on; has '\[fn\] power on'; end
+begin "prefix: p on";                cli $EX p on; has '\[fn\] power on'; end
+begin "prefix at both levels: ch bootdev pxe"; cli $EX ch bootdev pxe; has 'chassis bootdev=pxe'; end
+begin "ambiguous prefix reports ambiguity";    cli $EX power o; has 'ambiguous command o'; lacks '\[fn\] power'; end
+begin "ambiguous prefix: single error message" $X; cli $EX power o; lacks 'unknown command'; end
+begin "ambiguous prefix: in s (set/show/splash)"; cli $EX in s; has 'ambiguous command s'; end
+begin "ambiguous prefix: single error (in s)" $X; cli $EX in s; lacks 'unknown command'; end
+begin "ambiguous root prefix: i (info/ip)";       cli $EX i s; has 'ambiguous command i'; end
+begin "matching is case-sensitive (documented)"; cli $EX CHASSIS status; has 'unknown command <CHASSIS>'; end
 
 echo "== CLI: unknown input and exit codes"
-begin "unknown root command";        cli $XF xyz; has 'unknown command <xyz>'; end
-begin "unknown nested command";      cli $XF power xyz; has 'unknown command <xyz>'; lacks '\[fn\]'; end
-begin "empty-string argument does not crash"; cli $XF ""; no_crash; has 'available commands'; end
-begin "--help / -h is understood" $X; cli $XF -h; lacks 'unknown command'; end
-begin "exit code 0 on success";      cli $XF power on; rc_is 0; end
-begin "exit code != 0 on unknown command";  cli $XF xyz; rc_nz; end
-begin "exit code != 0 on usage error";      cli $XF chassis identify; rc_nz; end
-begin "exit code != 0 on ambiguous command"; cli $XF power o; rc_nz; end
+begin "unknown root command";        cli $EX xyz; has 'unknown command <xyz>'; end
+begin "unknown nested command";      cli $EX power xyz; has 'unknown command <xyz>'; lacks '\[fn\]'; end
+begin "empty-string argument does not crash"; cli $EX ""; no_crash; has 'available commands'; end
+begin "--help / -h is understood" $X; cli $EX -h; lacks 'unknown command'; end
+begin "exit code 0 on success";      cli $EX power on; rc_is 0; end
+begin "exit code != 0 on unknown command";  cli $EX xyz; rc_nz; end
+begin "exit code != 0 on usage error";      cli $EX chassis identify; rc_nz; end
+begin "exit code != 0 on ambiguous command"; cli $EX power o; rc_nz; end
 
 echo "== CLI: arguments"
-begin "missing argument -> usage";   cli $XF chassis identify; has 'usage: Blink identify'; lacks '\[fn\] chassis identify'; end
-begin "argument is passed to handler"; cli $XF chassis identify on; has 'chassis identify=on'; end
-begin "two arguments: info set a b"; cli $XF info set a b; has 'info set a=b'; end
-begin "too few arguments: info set a"; cli $XF info set a; has 'usage: set <what> <to>'; lacks 'info set a='; end
-begin "extra argument is rejected: chassis identify on extra" $X; cli $XF chassis identify on extra; has 'error: .*(extra|too many|unexpected)|usage'; end
-begin "extra argument is rejected: power on off" $X;             cli $XF power on off; has 'error: .*(extra|too many|unexpected)|usage'; end
-begin "extra argument is rejected: chassis status extra" $X;     cli $XF chassis status extra; has 'error: .*(extra|too many|unexpected)|usage'; end
-begin "misconfigured entry (no fn, no next)"; cli $XF chassis asd x; has 'misconfigured'; end
+begin "missing argument -> usage";   cli $EX chassis identify; has 'usage: Blink identify'; lacks '\[fn\] chassis identify'; end
+begin "argument is passed to handler"; cli $EX chassis identify on; has 'chassis identify=on'; end
+begin "two arguments: info set a b"; cli $EX info set a b; has 'info set a=b'; end
+begin "too few arguments: info set a"; cli $EX info set a; has 'usage: set <what> <to>'; lacks 'info set a='; end
+begin "extra argument is rejected: chassis identify on extra" $X; cli $EX chassis identify on extra; has 'error: .*(extra|too many|unexpected)|usage'; end
+begin "extra argument is rejected: power on off" $X;             cli $EX power on off; has 'error: .*(extra|too many|unexpected)|usage'; end
+begin "extra argument is rejected: chassis status extra" $X;     cli $EX chassis status extra; has 'error: .*(extra|too many|unexpected)|usage'; end
+begin "misconfigured entry (no fn, no next)"; cli $EX chassis asd x; has 'misconfigured'; end
 
 echo "== CLI: chains (self-loop tables)"
-begin "info set a b show: both run" $X;  cli $XF info set a b show; has 'info set a=b'; has '\[fn\] info show'; end
-begin "info show set a b splash" $X;     cli $XF info show set a b splash; has '\[fn\] info show'; has 'info set a=b'; has '██'; end
-begin "info show show runs twice" $X;    cli $XF info show show; count '\[fn\] info show' 2; end
-begin "info splash prints banner";       cli $XF info splash; has '██'; end
+begin "info set a b show: both run" $X;  cli $EX info set a b show; has 'info set a=b'; has '\[fn\] info show'; end
+begin "info show set a b splash" $X;     cli $EX info show set a b splash; has '\[fn\] info show'; has 'info set a=b'; has '██'; end
+begin "info show show runs twice" $X;    cli $EX info show show; count '\[fn\] info show' 2; end
+begin "info splash prints banner";       cli $EX info splash; has '██'; end
 
 echo "== CLI: dispatcher semantics (synthetic table)"
 begin "exact match wins over longer name";   cli $XT ab; has 'H_AB'; lacks 'H_ABC'; has 'RET=0'; end
@@ -128,20 +128,20 @@ begin "31 chained commands (32 tokens) all run"; cli $XT chain $(printf 'one %.0
 begin "33rd+ token is not silently dropped (MAX_TOKENS)" $X; cli $XT chain $(printf 'one %.0s' $(seq 40)); count 'H_OK' 40; end
 
 echo "== CLI: input limits and odd input (ASan/UBSan if available)"
-begin "line of exactly 255 chars is accepted";    cli $XFS power on "$(pad 246)"; no_crash; has '\[fn\] power on'; end
-begin "line of 256 chars is rejected cleanly";    cli $XFS power on "$(pad 247)"; no_crash; has 'too long'; rc_is 1; end
-begin "line of 300 chars is rejected cleanly";    cli $XFS power on "$(pad 300)"; no_crash; has 'too long'; rc_is 1; end
-begin "very long command name";                   cli $XFS "$(pad 4000)"; no_crash; rc_is 1; end
-begin "many arguments (1000)";                    cli $XFS $(printf 'x %.0s' $(seq 1000)); no_crash; end
-begin "tab inside a single argument splits tokens"; cli $XFS $'power\ton'; no_crash; has '\[fn\] power on'; end
-begin "trailing tab/space in argument";           cli $XFS power $'on\t '; no_crash; has '\[fn\] power on'; end
-begin "unicode argument";                         cli $XFS power $'\xd1\x8b\xd1\x8b'; no_crash; has 'unknown command'; end
-begin "quoted argument with a space stays one token" $X; cli $XF info set "a b" c; has 'info set a b=c'; end
-begin "only-whitespace argument";                 cli $XFS "   "; no_crash; end
+begin "line of exactly 255 chars is accepted";    cli $EXS power on "$(pad 246)"; no_crash; has '\[fn\] power on'; end
+begin "line of 256 chars is rejected cleanly";    cli $EXS power on "$(pad 247)"; no_crash; has 'too long'; rc_is 1; end
+begin "line of 300 chars is rejected cleanly";    cli $EXS power on "$(pad 300)"; no_crash; has 'too long'; rc_is 1; end
+begin "very long command name";                   cli $EXS "$(pad 4000)"; no_crash; rc_is 1; end
+begin "many arguments (1000)";                    cli $EXS $(printf 'x %.0s' $(seq 1000)); no_crash; end
+begin "tab inside a single argument splits tokens"; cli $EXS $'power\ton'; no_crash; has '\[fn\] power on'; end
+begin "trailing tab/space in argument";           cli $EXS power $'on\t '; no_crash; has '\[fn\] power on'; end
+begin "unicode argument";                         cli $EXS power $'\xd1\x8b\xd1\x8b'; no_crash; has 'unknown command'; end
+begin "quoted argument with a space stays one token" $X; cli $EX info set "a b" c; has 'info set a b=c'; end
+begin "only-whitespace argument";                 cli $EXS "   "; no_crash; end
 begin "dispatcher does not overflow on 32 tokens"; cli $XTS chain $(printf 'one %.0s' $(seq 31)); no_crash; end
 
 echo "== CLI: ip (keyword/value parsing)"
-ipc() { cli $XF ip "$@"; }
+ipc() { cli $EX ip "$@"; }
 begin "addr add: address and device";        ipc addr add 10.10.10.10/24 dev eth0; has '\[ip addr\] add address 10.10.10.10/24 \(ipv4, /24\) to device eth0'; end
 begin "addr add without plen = host";        ipc addr add 10.10.10.10 dev eth0; has '/32\) to device eth0'; end
 begin "addr add ipv6";                       ipc addr add 2001:db8::1/64 dev eth0; has 'ipv6, /64'; end
@@ -153,7 +153,7 @@ begin "addr show (all)";                     ipc addr show; has 'show addresses 
 begin "addr show dev";                       ipc addr show dev eth0; has 'show addresses of device eth0'; end
 begin "addr flush";                          ipc addr flush dev eth0; has 'flush all addresses of device eth0'; end
 begin "addr flush needs dev";                ipc addr flush; has 'missing required keyword <dev>'; end
-begin "addr add: abbreviations a a";         cli $XF ip a a 10.0.0.1/24 dev eth0; has '\[ip addr\] add address'; end
+begin "addr add: abbreviations a a";         cli $EX ip a a 10.0.0.1/24 dev eth0; has '\[ip addr\] add address'; end
 begin "addr add: missing address -> usage";  ipc addr add; has 'usage: add <addr>'; end
 begin "addr add: missing dev";               ipc addr add 10.10.10.10/24; has 'missing required keyword <dev>'; has 'command execution'; end
 begin "addr add: dev without value";         ipc addr add 10.10.10.10/24 dev; has 'keyword <dev> needs a value'; end
@@ -165,7 +165,7 @@ begin "addr add: empty plen";                ipc addr add 10.10.10.10/ dev eth0;
 begin "addr add: not an address";            ipc addr add hello dev eth0; has 'invalid address'; end
 begin "addr add: device name too long";      ipc addr add 10.10.10.10/24 dev averyveryverylongname; has 'invalid device name'; end
 begin "addr add: broadcast family mismatch"; ipc addr add 10.10.10.10/24 dev eth0 broadcast ::1; has 'invalid broadcast'; end
-begin "addr add: keyword abbreviation (the reported case)"; cli $XF ip a a 10.10.10.1/24 d eth0; has 'add address 10.10.10.1/24 .* to device eth0'; lacks 'unknown keyword'; end
+begin "addr add: keyword abbreviation (the reported case)"; cli $EX ip a a 10.10.10.1/24 d eth0; has 'add address 10.10.10.1/24 .* to device eth0'; lacks 'unknown keyword'; end
 begin "keyword abbreviation: de -> dev";    ipc addr add 10.10.10.1/24 de eth0; has 'to device eth0'; end
 begin "keyword abbreviation: several at once"; ipc route add 10.1.1.0/24 v 10.10.10.254 d eth0 m 5 o; has 'via 10.10.10.254 dev eth0 metric 5 onlink'; end
 begin "keyword abbreviation: flag (u -> up)"; ipc link set eth0 u; has 'state up'; end
@@ -173,7 +173,7 @@ begin "keyword abbreviation: label l";      ipc addr add 10.10.10.1/24 d eth0 l 
 begin "keyword abbreviation: dev given twice (d + dev)"; ipc addr add 10.10.10.1/24 d eth0 dev eth1; has 'given twice'; end
 begin "keyword abbreviation: unknown stays unknown"; ipc addr add 10.10.10.1/24 d eth0 x y; has 'unknown keyword <x>'; end
 begin "keyword abbreviation: not a prefix (devx)"; ipc addr add 10.10.10.1/24 devx eth0; has 'unknown keyword <devx>'; end
-begin "keyword abbreviation: empty token is not a prefix"; cli $XF ip addr add 10.10.10.1/24 "" eth0; has 'unknown keyword'; end
+begin "keyword abbreviation: empty token is not a prefix"; cli $EX ip addr add 10.10.10.1/24 "" eth0; has 'unknown keyword'; end
 begin "keyword abbreviation: valid value is not re-parsed (value 'd')"; ipc addr add 10.10.10.1/24 dev d; has 'to device d'; end
 begin "keyword abbreviation: ambiguous prefix s (src/scope)"; cli $XT kw s x; has 'ambiguous keyword <s>'; has 'RET=-1'; end
 begin "keyword abbreviation: sc -> scope";  cli $XT kw sc host; has 'KW scope=host'; end
@@ -227,8 +227,8 @@ begin "neigh show";                          ipc neigh show; has 'show all neigh
 begin "ip alone lists the tree";             ipc; has 'available commands'; has 'Routing table'; lacks '\[ip '; end
 begin "ip addr alone lists subcommands";     ipc addr; has 'available commands'; has 'flush'; end
 begin "ip unknown object";                   ipc nothing; has 'unknown command <nothing>'; end
-begin "ip: very long keyword value";         cli $XFS ip addr add 10.0.0.1/24 dev "$(pad 200)"; no_crash; has 'invalid device name'; end
-begin "ip: ASan clean on full route command"; cli $XFS ip route add 10.20.0.0/16 via 10.10.10.254 dev eth0 src 10.10.10.10 metric 100 onlink; no_crash; has 'onlink'; end
+begin "ip: very long keyword value";         cli $EXS ip addr add 10.0.0.1/24 dev "$(pad 200)"; no_crash; has 'invalid device name'; end
+begin "ip: ASan clean on full route command"; cli $EXS ip route add 10.20.0.0/16 via 10.10.10.254 dev eth0 src 10.10.10.10 metric 100 onlink; no_crash; has 'onlink'; end
 
 echo "== REPL: ip"
 begin "ip command in repl";                  repl $REPLS 'ip addr add 10.10.10.10/24 dev eth0' 'ip route add default via 10.10.10.254 dev eth0'; has '\[ip addr\] add address'; has '\[ip route\] add default route'; end
@@ -299,7 +299,7 @@ begin "self-loop: after positional args the command is a leaf (help)"; comp $REP
 echo "== CLI/REPL parity (same input -> same dispatcher output)"
 parity() { # parity "tokens..."
 	local line=$1 c r
-	cli $XF $line;       c=$(grep -v -e '^┌─<' -e '^$' <<<"$OUT")
+	cli $EX $line;       c=$(grep -v -e '^┌─<' -e '^$' <<<"$OUT")
 	repl $REPL "$line";  r=$(grep -v -e '^> ' -e '^$' -e '^error: command failed' <<<"$OUT")
 	[ "$c" = "$r" ] || bad "differs for '$line'"
 }

@@ -5,7 +5,7 @@
 
 #include <stdio.h>
 
-#include "../args.h"
+#include "args.h"
 
 const char splash[] = "                                                         ███    \n"
 					  "                                                        █████   \n"

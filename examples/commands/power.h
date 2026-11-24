@@ -5,7 +5,7 @@
 
 #include <stddef.h>
 
-#include "../args.h"
+#include "args.h"
 
 static int power_on ( args_context_t *ctx ) {
 	(void) ctx;

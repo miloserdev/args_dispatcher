@@ -5,7 +5,7 @@
 
 #include <stddef.h>
 
-#include "../args.h"
+#include "args.h"
 
 typedef struct
 {

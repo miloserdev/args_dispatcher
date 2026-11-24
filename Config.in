@@ -1,5 +1,5 @@
-config BR2_PACKAGE_XFCLI
-	bool "xfcli"
+config BR2_PACKAGE_EXAMPLE
+	bool "example"
 	select BR2_PACKAGE_READLINE
 	help
-	  xf command line tool.
+	  example command line tool.

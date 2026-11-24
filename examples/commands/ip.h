@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../args.h"
+#include "args.h"
 
 /*
  * iproute2-like commands:

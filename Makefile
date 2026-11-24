@@ -1,28 +1,30 @@
-CC      ?= cc
-CFLAGS  ?= -O2 -Wall -Wextra
-LDLIBS  = -lreadline
-PREFIX  ?= /usr/local
+CC       ?= cc
+CFLAGS   ?= -O2 -Wall -Wextra
+CPPFLAGS += -Isrc
+LDLIBS   = -lreadline
+PREFIX   ?= /usr/local
 
-SRC_DIR = src
-HEADERS = $(wildcard $(SRC_DIR)/*.h $(SRC_DIR)/commands/*.h)
-BUILD   = build
+LIB_HEADERS     = $(wildcard src/*.h)
+EXAMPLE_DIR     = examples
+EXAMPLE_HEADERS = $(wildcard $(EXAMPLE_DIR)/commands/*.h)
+BUILD           = build
 
 .PHONY: all install clean test
 
-all: $(BUILD)/xf $(BUILD)/xf_repl
+all: $(BUILD)/example $(BUILD)/example_repl
 
 $(BUILD):
 	mkdir -p $@
 
-$(BUILD)/xf: $(SRC_DIR)/xf.c $(HEADERS) | $(BUILD)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $<
+$(BUILD)/example: $(EXAMPLE_DIR)/example.c $(LIB_HEADERS) $(EXAMPLE_HEADERS) | $(BUILD)
+	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) -o $@ $<
 
-$(BUILD)/xf_repl: $(SRC_DIR)/xf_repl.c $(HEADERS) | $(BUILD)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LDLIBS)
+$(BUILD)/example_repl: $(EXAMPLE_DIR)/example_repl.c $(LIB_HEADERS) $(EXAMPLE_HEADERS) | $(BUILD)
+	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) -o $@ $< $(LDLIBS)
 
 install: all
-	install -D -m 0755 $(BUILD)/xf      $(DESTDIR)$(PREFIX)/bin/xf
-	install -D -m 0755 $(BUILD)/xf_repl $(DESTDIR)$(PREFIX)/bin/xf_repl
+	install -D -m 0755 $(BUILD)/example      $(DESTDIR)$(PREFIX)/bin/example
+	install -D -m 0755 $(BUILD)/example_repl $(DESTDIR)$(PREFIX)/bin/example_repl
 
 clean:
 	rm -rf $(BUILD)

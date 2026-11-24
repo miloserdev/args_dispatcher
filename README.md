@@ -1,4 +1,4 @@
-# xf
+# example
 
 Header-only C library for building hierarchical command-line and REPL tools in
 the style of [iproute2](https://wiki.linuxfoundation.org/networking/iproute2):
@@ -6,8 +6,10 @@ commands live in a tree of tables, are matched by exact name or unique
 abbreviation, and take typed `keyword [value]` options. A one-shot CLI and an
 interactive readline REPL can share the same command tree.
 
-`src/args.h` is the whole library. `src/xf.c` and `src/xf_repl.c` are example
-frontends over a demo command set (`ip`, `chassis`, `power`, `info`).
+`src/` holds the library (`args.h` plus the logging macros in `debug.h`).
+`examples/` holds demo frontends — a one-shot CLI (`example.c`) and a readline
+REPL (`example_repl.c`) — over a demo command set (`ip`, `chassis`, `power`,
+`info`).
 
 ## Features
 
@@ -24,21 +26,21 @@ frontends over a demo command set (`ip`, `chassis`, `power`, `info`).
 
 ## Repository layout
 
-| path               | what                                                        |
-| ------------------ | ----------------------------------------------------------- |
-| `src/args.h`       | the library (include this)                                   |
-| `src/debug.h`      | logging macros used by the demo commands                     |
-| `src/xf.c`         | one-shot CLI frontend                                        |
-| `src/xf_repl.c`    | interactive REPL frontend (readline)                         |
-| `src/commands/`    | demo command implementations (`ip.h` is the most complete)   |
-| `tests/run.sh`     | test suite: CLI, REPL, completion, ASan/UBSan, leak checks   |
-| `tests/xf_test.c`  | synthetic-table dispatcher tests                             |
-| `Config.in`        | Buildroot package fragment (package name `xfcli`)            |
+| path                  | what                                                       |
+| --------------------- | ---------------------------------------------------------- |
+| `src/args.h`          | the library (include this)                                  |
+| `src/debug.h`         | logging macros used by `args.h` and the demo                |
+| `examples/example.c`      | one-shot CLI frontend                                       |
+| `examples/example_repl.c` | interactive REPL frontend (readline)                        |
+| `examples/commands/`      | demo command implementations (`ip.h` is the most complete)  |
+| `tests/run.sh`            | test suite: CLI, REPL, completion, ASan/UBSan, leak checks  |
+| `tests/example_test.c`    | synthetic-table dispatcher tests                            |
+| `Config.in`               | Buildroot package fragment (package name `example`)         |
 
 ## Build, test, install
 
 ```sh
-make           # build/xf, build/xf_repl (needs libreadline)
+make           # build/example, build/example_repl (needs libreadline)
 make test      # 200+ cases; uses ASan/UBSan when available
 make install   # PREFIX defaults to /usr/local
 ```
@@ -126,7 +128,7 @@ struct args_command_t
   the node's `args` field.
 - A node with `next` descends into a sub-table. A `next` pointing to the table
   the node itself lives in (a "self-loop") makes the command repeatable, e.g.
-  `info show show` — see `src/commands/info.h`.
+  `info show show` — see `examples/commands/info.h`.
 - `fn == NULL && next == NULL` is a configuration error and is reported as
   such at dispatch time.
 
@@ -235,14 +237,14 @@ rl_attempted_completion_function = complete;
 `args_complete()` completes command names and keyword names, and shows
 per-command help when the cursor sits past a complete command or a keyword
 value. Reset `ctx.line`, `ctx.command`, `ctx.idx` (and friends) for every
-input line, as `src/xf_repl.c` does.
+input line, as `examples/example_repl.c` does.
 
 ### Diagnostics and exit status
 
 Diagnostics and the demo output go to stdout through the `log()` / `log_info()`
 macros (`src/debug.h`), indented by dispatch depth. `args_dispatch()` returns
 -1 on any error — unknown or ambiguous command, usage error, failed handler —
-and 0 on success; the `xf` frontend maps that to exit status 1 and 0.
+and 0 on success; the `example` frontend maps that to exit status 1 and 0.
 
 ## Limitations (known issues)
 
