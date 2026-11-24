@@ -1,4 +1,6 @@
-# example
+<img width="100%" alt="numallama.gif" src="https://raw.githubusercontent.com/miloserdev/args_dispatcher/master/examples/example.gif">
+
+# args dispatcher
 
 Header-only C library for building hierarchical command-line and REPL tools in
 the style of [iproute2](https://wiki.linuxfoundation.org/networking/iproute2):
